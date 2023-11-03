@@ -1,0 +1,124 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          wospi
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     3
+# Default-Stop:	     0 1 6
+# Short-Description: WOSPi - Weather Observation System for the Raspberry Pi
+### END INIT INFO
+
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+NAME=wospi
+DESC="WOSPi - Weather Observation System"
+
+RUNUSER=wospi
+PROG=wospi.pyc
+RUNSCR=/home/$RUNUSER/$PROG
+
+DATE=$(date +'%Y-%m-%d %H:%M:%S')
+
+
+
+EL=0
+
+logdirs="wospi
+apt
+sysstat
+"
+
+do_start() {
+    ES=0
+    if [ -f $RUNSCR ]; then
+	[ "$VERBOSE" != no ] && log_begin_msg "Running ${0##*/}..."
+	PID=$(ps -ef|grep $PROG|egrep -v "$0|grep"| awk '{printf $2" "}')
+	if [ -n "$PID" ]; then
+	    echo "$DATE do_start $PROG is already running ($PID)."
+	else
+	    for i in $logdirs; do
+	        if [ ! -d "/var/log/$i" ]; then
+		    mkdir -p /var/log/$i
+		    chmod 1777 /var/log/$i
+	        fi
+	    done
+	    chmod 777 /var/log
+	    su - $RUNUSER -c "/usr/bin/python $RUNSCR" 
+	    ES=$?
+	fi
+	[ "$VERBOSE" != no ] && log_end_msg $ES
+    else
+	echo "$DATE do_start ERROR: could not read $RUNSCR"
+	ES=1
+    fi
+    return $ES
+}
+
+do_check() {
+
+    PID=$(ps -ef|grep $PROG|egrep -v "$0|grep"| awk '{printf $2" "}')
+    if [ -n "$PID" ]; then
+	echo "$DATE do_start $PROG is running ($PID)."
+    else
+	echo "$DATE do_start $PROG is stopped."
+    fi
+}
+
+do_kill() {
+    ES=0
+
+    ps -ef|grep $PROG|egrep -v "$0|grep"
+
+    PID=$(ps -ef|grep $PROG|egrep -v "$0|grep|SCREEN"| grep $RUNUSER | awk '{printf $2" "}')
+    if [ -n "$PID" ]; then
+	[ "$VERBOSE" != no ] && log_begin_msg "killing ${0##*/}..."
+	echo "$DATE do_kill killing $PROG ($PID)..."
+	#screen -S "wxscreen" -X quit
+	kill $PID
+	ES=$?
+	[ "$VERBOSE" != no ] && log_end_msg $ES
+    else
+	echo "$DATE do_kill $PROG is already stopped."
+    fi
+
+    return $ES
+}
+
+
+if [ "$(/usr/bin/whoami)" != "root" ]; then
+    echo "ERROR: run this script as 'root'"
+    EL=2
+    exit $EL
+fi
+
+status=0
+
+case "$1" in
+    start)
+        log_daemon_msg "Starting $DESC" "$NAME"
+	do_start
+	status=$?
+        log_end_msg $status
+        ;;
+    restart|reload|force-reload)
+        echo "Error: argument '$1' not supported" >&2
+        EL=3
+        ;;
+    stop)
+	do_kill
+        ;;
+    status)
+	do_check
+        ;;
+    *)
+        log_success_msg "Usage: $0 {start|stop|status}"
+        EL=3
+        ;;
+esac
+
+exit $EL
+
