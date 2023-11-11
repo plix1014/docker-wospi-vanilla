@@ -12,7 +12,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${CSV_DATA}:/csv_data:rw
       - ${WOSPI_CONFIG}:$HOMEDIR/config.py:r
-      - ${BACKUP_DIR}:$HOMEDIR/backup:rw
+      - ${BACKUP_DIR}:/backup:rw
       #- ${NETRC_CONFIG}:$HOMEDIR/.netrc:r
       - ${HOME}/.ssh:$HOMEDIR/.ssh:r
     devices:
@@ -22,4 +22,5 @@ services:
       TAG: "${TAG}"
       HOMEDIR: ${HOMEDIR}
       CSVPATH: ${CSVPATH}
+      MAILTO: ${MAILTO}
 #

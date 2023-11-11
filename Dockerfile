@@ -1,6 +1,18 @@
-FROM debian:buster-slim
+#------------------------------------------------------------------------------------------
+# checkout git
+FROM alpine/git:latest
+WORKDIR /addon
+RUN git clone https://github.com/plix1014/wospi-addon.git
+WORKDIR /addon/wospi-addon
+RUN git pull
 
-ARG CONT_VER WOSPI_VERSION WOSPI_RELEASE_DATE TERM LANG TZ USERHOME USERHOME CSVPATH TMPPATH WLOGPATH
+#------------------------------------------------------------------------------------------
+# build image
+FROM debian:buster-slim as base
+
+ARG CONT_VER WOSPI_VERSION WOSPI_RELEASE_DATE
+ARG UIDGID=6003
+
 
 ENV CONT_VER=${CONT_VER:-0.5}
 ENV WOSPI_VERSION=${WOSPI_VERSION:-20191127}
@@ -15,6 +27,7 @@ ENV CSVPATH=${CSVPATH:-/csv_data}
 ENV BACKUPPATH=${BACKUPPATH:-/backup}
 ENV TMPPATH=${TMPPATH:-/var/tmp/}
 ENV WLOGPATH=${WLOGPATH:-/var/log/wospi}
+ENV MAILTO=${MAILTO}
 ENV PYTHONUNBUFFERED=1
 
 
@@ -35,48 +48,36 @@ RUN apt update && \
 
 
 # user setup
-RUN groupadd -g 1003 wospi && useradd -ms /bin/bash -u 1003 -g 1003 -G dialout -c "Weather Observation System for Raspberry Pi" -d $USERHOME wospi
+RUN groupadd -g ${UIDGID} wospi && useradd -ms /bin/bash -u ${UIDGID} -g ${UIDGID} -G dialout -c "Weather Observation System for Raspberry Pi" -d $USERHOME wospi
 
 # create directories
 RUN bash -c 'mkdir -p $CSVPATH $WLOGPATH $BACKUPPATH'
+
+
+#------------------------------------------------------------------------------------------
+# build wospi vanilla image
+FROM base as image-vanilla
 
 WORKDIR $HOMEPATH
 
 # wospi distribution start
 # https://www.annoyingdesigns.com/wospi/wospi.zip
-
-# variant 1
-# adds layer; hide zip
-#ADD https://www.annoyingdesigns.com/wospi/wospi.zip /tmp
-#RUN unzip /tmp/wospi.zip && rm /tmp/wospi.zip
-
-# variant 2
-# without ADD
+#
 ENV WFILE=/tmp/wospi.zip
 RUN curl -S -o $WFILE https://www.annoyingdesigns.com/wospi/wospi.zip && unzip $WFILE && rm $WFILE
-
-# variant 3
-# unzip and tar official software
-#ADD data/wospi.20191127.tar.gz .
+#
 # wospi distribution end
-
-
-# my personal changes and addons
-
-# my tools for other weather sites
-WORKDIR $USERHOME
-ADD data/lftp.config.tar.gz $USERHOME
-# add vcgen binary
-ADD data/raspi.libs.tar.gz /
 
 # add scripts
 COPY data/scripts/entrypoint.sh /
 COPY data/.vimrc /root
 COPY data/.vimrc $USERHOME
+# 
+COPY data/scripts/wxBackup.sh $USERHOME
 
 # add cron jobs
-COPY data/scripts/rc.wospi /etc/init.d/wospi
-COPY data/cron/wospi_cron /etc/cron.d/wospi
+COPY --chown=root:root --chmod=0755 data/scripts/rc.wospi /etc/init.d/wospi
+COPY --chown=root:root --chmod=0644 data/cron/wospi_cron /etc/cron.d/wospi
 
 # set permissions
 RUN chown -R wospi:wospi $USERHOME $WLOGPATH $BACKUPPATH
@@ -87,9 +88,9 @@ RUN useradd -ms /home/wx/wxview.sh -c "WOSPI virtual terminal" wx
 COPY --chown=wx:wospi --chmod=755 data/scripts/wxview.sh /home/wx
 
 
-# only for dev
 # sudo and vim nice to have, but not necessary
 RUN echo "wospi ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/030_wospi-nopasswd
+
 
 USER wospi
 
@@ -103,3 +104,22 @@ VOLUME [ "$CSVPATH", "$TMPPATH", "$BACKUPPATH" ]
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["wospi"]
 
+
+#------------------------------------------------------------------------------------------
+# build prod image
+FROM image-vanilla as image-prod
+USER root
+
+# add vcgen binary
+ADD data/raspi.libs.tar.gz /
+
+# my additional scripts
+COPY --from=0 /addon/wospi-addon/transfer/fscp /usr/local/bin
+# lftp config
+ADD data/lftp.config.tar.gz $USERHOME
+# set permissions
+RUN chown -R wospi:wospi $USERHOME 
+
+USER wospi
+
+#------------------------------------------------------------------------------------------

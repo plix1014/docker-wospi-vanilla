@@ -5,11 +5,11 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=""
 #
 # WOSPI jobs
-00 12   * * *   wospi  cd ~ && python plotMinMaxTemp.py > /var/log/wospi/plotMinMaxTemp.log 2>&1
-00 18   * * *   wospi  cd ~ && python plotSolar.py      > /var/log/wospi/plotSolar.log 2>&1
-03 18   * * *   wospi  cd ~ && python plotTempSolar.py  > /var/log/wospi/plotTempSolar.log 2>&1
-01 00   * * *   wospi  cd ~ && python plotMinMaxTemp.py > /var/log/wospi/plotMinMaxTemp.log 2>&1
-59 23   * * *   wospi  cd ~ && python plotBaroWeek.py   > /var/log/wospi/plotBaroWeek.log 2>&1
-#01 00   1 * *   wospi  cd ~ && /home/wospi/wxBackup.sh  > /var/log/wospi/wxbackup.log 2>&1
+00 12   * * *   wospi  cd ~ && python plotMinMaxTemp.py 2>  /proc/1/fd/2 | tee -a /proc/1/fd/1
+00 18   * * *   wospi  cd ~ && python plotSolar.py      2>  /proc/1/fd/2 | tee -a /proc/1/fd/1
+03 18   * * *   wospi  cd ~ && python plotTempSolar.py  2>  /proc/1/fd/2 | tee -a /proc/1/fd/1
+01 00   * * *   wospi  cd ~ && python plotMinMaxTemp.py 2>  /proc/1/fd/2 | tee -a /proc/1/fd/1
+59 23   * * *   wospi  cd ~ && python plotBaroWeek.py   2>  /proc/1/fd/2 | tee -a /proc/1/fd/1
+#01 00   1 * *   wospi  cd ~ && /home/wospi/wxBackup.sh 2>  /proc/1/fd/2 | tee -a /proc/1/fd/1
 #
 #

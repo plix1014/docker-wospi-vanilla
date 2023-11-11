@@ -1,11 +1,22 @@
 #!/bin/bash
 
-#TAG=${1:-0.7}
-
 . .env
 
 export CONT_VER=$TAG
 
-echo "docker build --build-arg $CONT_VER -t ${IMAGE_NAME}:$TAG"
-docker build --build-arg $CONT_VER -t ${IMAGE_NAME}:$TAG  .
+if [ $# -ne 1 ]; then
+    echo
+    echo "usage: ${0##*/} <inc|full>"
+    echo
+    exit 1
+fi
+
+OPTS=
+
+if [ "$1" = "full" ]; then
+    OPTS="--no-cache"
+fi
+
+echo "docker build $OPTS --target $TARGET --build-arg $CONT_VER -t ${IMAGE_NAME}:$TAG"
+time docker build $OPTS --target $TARGET --build-arg $CONT_VER -t ${IMAGE_NAME}:$TAG  .
 
