@@ -26,7 +26,7 @@ cd <repo path>
 ./build.sh
 ```
 
-User in container runs with UID 6003. if you want to change it, you could use the build argument "UIDGID"
+User in container runs with UID `6003`. if you want to change it, you could use the build argument `UIDGID`
 
 e.g.
 ```
@@ -43,7 +43,7 @@ Adjust according your needs
 
 #### config.py
 
-Edit 'WOSPI_CONFIG'.
+Edit `WOSPI_CONFIG`.
 
 You could use:
 | config file            | description |
@@ -51,7 +51,7 @@ You could use:
 | data/config.py|slightly modified file with scp/fscp selection|
 | data/config.py.default|original file from distribution file|
 
-Or copy the 'config.py' from the [original distribution file](https://www.annoyingdesigns.com/wospi)
+Or copy the `config.py` from the [original distribution file](https://www.annoyingdesigns.com/wospi)
 or start the container and copy file to the host or use your current file 
 
 #### docker-compose.yml
