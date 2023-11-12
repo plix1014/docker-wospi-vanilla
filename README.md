@@ -72,15 +72,48 @@ e.g. the Volume mounts
 
 ## operation
 
-enter into the container
+### start the container
+
+```
+cd <install path>
+docker compose up -d
+```
+
+### enter into the container
 ```
 ./log2cont.sh
 ```
 
+### view wxdata
 view the wxdata.xml file. As you would login to the wx user
 ```
 ./view_wx_data.sh
 ```
+
+
+## Dockerfile
+
+packages installed in container
+
+### mandatory wospi tools
+* gnuplot 
+* gsfonts 
+* python-serial 
+* python-dateutil 
+
+
+### additional helper
+* net-tools 
+* procps
+* sudo 
+* vim 
+
+* curl 
+* unzip 
+* zip 
+* mutt 
+* bc 
+* lftp 
 
 
 ## Author
