@@ -125,6 +125,11 @@ packages installed in container
 * lftp 
 
 
+## Docker Hub
+
+Link to docker hub
+* [wospi-vanilla](https://hub.docker.com/repository/docker/juharov/wospi-vanilla/general)
+
 ## Credits
 
 * WOSPi - [Weather Observation System for Raspberry Pi](http://wx.annoyingdesigns.com) by Torkel M. Jodalen
