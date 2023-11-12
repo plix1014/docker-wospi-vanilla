@@ -116,7 +116,14 @@ packages installed in container
 * lftp 
 
 
+## Credits
+
+* WOSPi - [Weather Observation System for Raspberry Pi](http://wx.annoyingdesigns.com) by Torkel M. Jodalen
+* Davis Vantage - [Davis Vantage Pro2 Weather station](https://www.davisnet.com/pages/vantage-pro2)
+
 ## Author
+
+of the container build script
 
 * **plix1014** - [plix1014](https://github.com/plix1014)
 
