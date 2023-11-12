@@ -28,6 +28,8 @@ cd <repo path>
 
 User in container runs with UID `6003`. if you want to change it, you could use the build argument `UIDGID`
 
+You should create a user with the same UID on the docker host
+
 e.g.
 ```
 docker build  --target image-prod --build-arg="UIDGID=5100" -t wospi-vanilla .
