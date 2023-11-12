@@ -50,8 +50,8 @@ Edit `WOSPI_CONFIG`.
 You could use:
 | config file            | description |
 |------------------------|-------------|
-| data/config.py|slightly modified file with scp/fscp selection|
-| data/config.py.default|original file from distribution file|
+| `data/config.py`|slightly modified file with scp/fscp selection|
+| `data/config.py.default`|original file from distribution file|
 
 Or copy the `config.py` from the [original distribution file](https://www.annoyingdesigns.com/wospi)
 or start the container and copy file to the host or use your current file 
@@ -63,11 +63,11 @@ Check and edit the docker-compose.yml
 e.g. the Volume mounts
 | volumne            | description |
 |--------------------|-------------|
-|${CSV_DATA}:/csv_data:rw|path to csv_data directory|
-|${WOSPI_CONFIG}:$HOMEDIR/config.py:r|path to config.py|
-|${BACKUP_DIR}:/backup:rw|path to backup dir|
-|${NETRC_CONFIG}:$HOMEDIR/.netrc:r|.netrc if needed => fscp selection in config.py|
-|${HOME}/.ssh:$HOMEDIR/.ssh:r|ssh private key for upload => scp selection in config.py|
+|`${CSV_DATA}:/csv_data:rw`|path to csv_data directory|
+|`${WOSPI_CONFIG}:$HOMEDIR/config.py:r`|path to config.py|
+|`${BACKUP_DIR}:/backup:rw`|path to backup dir|
+|`${NETRC_CONFIG}:$HOMEDIR/.netrc:r`|.netrc if needed => fscp selection in config.py|
+|`${HOME}/.ssh:$HOMEDIR/.ssh:r`|ssh private key for upload => scp selection in config.py|
 
 
 ## operation
