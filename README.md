@@ -2,7 +2,16 @@
 
 WOSPi - Weather Observation System for Raspberry Pi by Torkel M. Jodalen in a docker container
 
+Container build script for WOSPi. 
 
+Based on the default distribution files from Torkel M. Jodalen.
+
+An extended version is available at [docker-wospi extended](https://github.com/plix1014/docker-wospi). This contains additional reports.
+
+One reason for putting WOSPi into the container was easier migration from one raspberryi/Raspberry Pi OS to another (newer).
+The second reason was the python2 issue with the current Pi OS bookworm.
+
+This vanilla version was the startingpoint for the 'dockerization'.
 
 ## Container build
 
