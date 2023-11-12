@@ -17,6 +17,6 @@ if [ "$1" = "full" ]; then
     OPTS="--no-cache"
 fi
 
-echo "docker build $OPTS --target $TARGET --build-arg $CONT_VER -t ${IMAGE_NAME}:$TAG"
-time docker build $OPTS --target $TARGET --build-arg $CONT_VER -t ${IMAGE_NAME}:$TAG  .
+echo "docker build $OPTS --target $TARGET --build-arg="CONT_VER=$CONT_VER" -t ${IMAGE_NAME}:$TAG"
+time docker build $OPTS --target $TARGET --build-arg="CONT_VER=$CONT_VER" -t ${IMAGE_NAME}:$TAG  .
 
