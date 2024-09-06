@@ -8,7 +8,7 @@ RUN git pull
 
 #------------------------------------------------------------------------------------------
 # build image
-FROM debian:buster-slim as base
+FROM debian:buster-slim AS base
 
 ARG CONT_VER WOSPI_VERSION WOSPI_RELEASE_DATE
 ARG UIDGID=6003
@@ -56,7 +56,7 @@ RUN bash -c 'mkdir -p $CSVPATH $WLOGPATH $BACKUPPATH'
 
 #------------------------------------------------------------------------------------------
 # build wospi vanilla image
-FROM base as image-vanilla
+FROM base AS image-vanilla
 
 WORKDIR $HOMEPATH
 
@@ -107,7 +107,7 @@ CMD ["wospi"]
 
 #------------------------------------------------------------------------------------------
 # build prod image
-FROM image-vanilla as image-prod
+FROM image-vanilla AS image-prod
 USER root
 
 # add vcgen binary
