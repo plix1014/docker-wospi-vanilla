@@ -53,7 +53,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Docker.wospi
+          file: Dockerfile.wospi
           platforms: ${{ env.PLATFORM }}
           push: true
           build-args: |
