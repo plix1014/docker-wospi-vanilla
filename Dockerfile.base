@@ -26,13 +26,4 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 
 # User-Setup
 ARG UIDGID=6003
-#RUN groupadd -g ${UIDGID} wospi && \
-#    useradd -ms /bin/bash -u ${UIDGID} -g ${UIDGID} -G dialout \
-#        -c "Weather Observation System for Raspberry Pi" -d $USERHOME wospi
-
-# prepare directories
-#RUN mkdir -p $CSVPATH $TMPPATH/wospi $WLOGPATH $BACKUPPATH \
-#    && chown -R wospi:wospi $USERHOME $TMPPATH/wospi $WLOGPATH $BACKUPPATH
-
-# no WORKDIR here – will be set in final image
 
