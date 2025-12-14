@@ -3,8 +3,6 @@ name: Build & Push WOSPI Images (arm64)
 on:
   push:
     branches: [ main ]
-    paths:
-      - '**'
   workflow_dispatch:
 
 jobs:
@@ -20,8 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Detect changes
-        uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -52,22 +49,35 @@ jobs:
           source build.env
           echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
 
-      - name: Docker Login
+      - name: Docker login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Setup Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Check if slim image exists
+        id: slim-exists
+        run: |
+          if docker manifest inspect \
+            ${{ secrets.DOCKERHUB_USER }}/wospi-slim:${{ env.OS_TAG }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build & Push slim
+        if: steps.slim-exists.outputs.exists != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.slim
           platforms: linux/arm64
           push: true
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/wospi-slim:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/wospi-slim:buildcache,mode=max
           build-args: |
             OS_TAG=${{ env.OS_TAG }}
           tags: |
@@ -94,22 +104,35 @@ jobs:
           echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
           echo "CONT_VER=$CONT_VER" >> $GITHUB_ENV
 
-      - name: Docker Login
+      - name: Docker login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Setup Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Check if base image exists
+        id: base-exists
+        run: |
+          if docker manifest inspect \
+            ${{ secrets.DOCKERHUB_USER }}/wospi-base:${{ env.OS_TAG }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build & Push base
+        if: steps.base-exists.outputs.exists != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.base
           platforms: linux/arm64
           push: true
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/wospi-base:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/wospi-base:buildcache,mode=max
           build-args: |
             BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-slim:${{ env.OS_TAG }}
             CONT_VER=${{ env.CONT_VER }}
@@ -138,23 +161,38 @@ jobs:
           echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
           echo "CONT_VER=$CONT_VER" >> $GITHUB_ENV
           echo "BUILD=$BUILD" >> $GITHUB_ENV
+          echo "WOSPI_VERSION=$WOSPI_VERSION" >> $GITHUB_ENV
+          echo "WOSPI_RELEASE_DATE=$WOSPI_RELEASE_DATE" >> $GITHUB_ENV
 
-      - name: Docker Login
+      - name: Docker login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Setup Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Check if vanilla image exists
+        id: vanilla-exists
+        run: |
+          if docker manifest inspect \
+            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}-${{ env.BUILD }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build & Push vanilla
+        if: steps.vanilla-exists.outputs.exists != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.wospi
           platforms: linux/arm64
           push: true
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:buildcache,mode=max
           build-args: |
             OS_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-base
             OS_TAG=${{ env.OS_TAG }}
