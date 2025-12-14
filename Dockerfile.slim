@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1.4
+
+# Dockerfile.slim
+
+ARG OS_TAG
+FROM debian:bookworm-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Alle ENV-Variablen und Labels optional hier übernehmen
+ENV TZ=Europe/Vienna \
+    LANG=en_US.UTF-8 \
+    TERM=xterm-256color \
+    USERHOME=/home/wospi
+
+ENV HOMEPATH=${USERHOME} \
+    CSVPATH=${USERHOME}/csv_data \
+    BACKUPPATH=${USERHOME}/backup \
+    TMPPATH=/var/tmp \
+    WLOGPATH=/var/log/wospi
+
+# os config
+RUN apt update && \
+    apt install -y --no-install-recommends \
+        curl unzip gnupg lsb-release ca-certificates net-tools coreutils \
+        locales cron bc zip mutt lftp gnuplot gsfonts vim sudo procps \
+        python3-serial python3-dateutil && \
+    sed -i 's,^# en_US,en_US,g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8 && \
+    update-locale && \
+    apt-get -y clean && \
+    rm -r /var/cache/apt /var/lib/apt/lists/* /var/log/*log
+
+# User-Setup
+ARG UIDGID=6003
+RUN groupadd -g ${UIDGID} wospi && \
+    useradd -ms /bin/bash -u ${UIDGID} -g ${UIDGID} -G dialout \
+        -c "Weather Observation System for Raspberry Pi" -d $USERHOME wospi
+
+# prepare directories
+RUN mkdir -p $CSVPATH $TMPPATH/wospi $WLOGPATH $BACKUPPATH \
+    && chown -R wospi:wospi $USERHOME $TMPPATH/wospi $WLOGPATH $BACKUPPATH
+
+# no WORKDIR here – will be set in final image
+

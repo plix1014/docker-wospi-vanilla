@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1.4
+
+# Dockerfile.base
+
+ARG OS_TAG
+FROM juharov/wospi-slim:${OS_TAG} AS base
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Alle ENV-Variablen und Labels optional hier übernehmen
+ENV TZ=Europe/Vienna \
+    LANG=en_US.UTF-8 \
+    TERM=xterm-256color
+
+# os config
+RUN apt update && \
+    apt install -y --no-install-recommends \
+        gcal sqlite3 iputils-ping ftp telnet \
+        python3-pil python3-pip python3-paho-mqtt python3-pyinotify \
+        python3-ephem python3-setuptools libterm-readline-perl-perl \
+    && apt-get -y clean && rm -rf /var/lib/apt/lists/* /var/log/*log
+
+RUN pip3 install --no-cache-dir --break-system-packages \
+        pandas numpy imageio windrose python-dotenv
+
+
+# User-Setup
+ARG UIDGID=6003
+#RUN groupadd -g ${UIDGID} wospi && \
+#    useradd -ms /bin/bash -u ${UIDGID} -g ${UIDGID} -G dialout \
+#        -c "Weather Observation System for Raspberry Pi" -d $USERHOME wospi
+
+# prepare directories
+#RUN mkdir -p $CSVPATH $TMPPATH/wospi $WLOGPATH $BACKUPPATH \
+#    && chown -R wospi:wospi $USERHOME $TMPPATH/wospi $WLOGPATH $BACKUPPATH
+
+# no WORKDIR here – will be set in final image
+
