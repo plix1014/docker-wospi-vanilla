@@ -1,94 +1,157 @@
-name: Build WOSPI Images
+name: Build & Push WOSPI Chain (slim → base → vanilla)
 
 on:
   push:
     #paths:
-    #  - Dockerfile.*
-    #  - build.env
+    #  - 'Dockerfile.*'
+    #  - 'build.env'
   workflow_dispatch:
 
-env:
-  DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
-
 jobs:
+  # ==========================
+  # Step 1: Build Slim Image
+  # ==========================
   build-slim:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Load env
+      - name: Load build environment
         run: |
           sed -i 's/\r$//' build.env
           source build.env
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "PLATFORM=$PLATFORM" >> $GITHUB_ENV
+          echo "OS_IMAGE=$OS_IMAGE" >> $GITHUB_ENV
           echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
+          echo "CONT_VER=$CONT_VER" >> $GITHUB_ENV
+          echo "BUILD=$BUILD" >> $GITHUB_ENV
 
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - name: Docker login
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push slim
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Check for ARM64 runner
+        id: check_arm
+        run: |
+          if [[ "$(uname -m)" == "aarch64" ]]; then
+            echo "ARM64_RUNNER=true" >> $GITHUB_ENV
+          else
+            echo "ARM64_RUNNER=false" >> $GITHUB_ENV
+          fi
+
+      - name: Register QEMU (fallback)
+        if: env.ARM64_RUNNER == 'false'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
+
+      - name: Build & Push Slim Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.slim
-          platforms: ${{ env.PLATFORM }}
+          platforms: linux/arm64
           push: true
+          build-args: |
+            CONT_VER=${{ env.CONT_VER }}
+            OS_TAG=${{ env.OS_TAG }}
           tags: |
             ${{ secrets.DOCKERHUB_USER }}/wospi-slim:${{ env.OS_TAG }}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-slim:latest
 
+  # ==========================
+  # Step 2: Build Base Image
+  # ==========================
   build-base:
-    needs: build-slim
     runs-on: ubuntu-latest
+    needs: build-slim
+    env:
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Load env
+      - name: Load build environment
         run: |
           sed -i 's/\r$//' build.env
           source build.env
           echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
+          echo "CONT_VER=$CONT_VER" >> $GITHUB_ENV
+          echo "BUILD=$BUILD" >> $GITHUB_ENV
 
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - name: Docker login
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push base
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Build & Push Base Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.base
-          platforms: ${{ env.PLATFORM }}
+          platforms: linux/arm64
           push: true
           build-args: |
-            OS_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-slim
-            OS_TAG=${{ env.OS_TAG }}
+            BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-slim:${OS_TAG}
+            CONT_VER=${CONT_VER}
+            OS_TAG=${OS_TAG}
           tags: |
-            ${{ secrets.DOCKERHUB_USER }}/wospi-base:${{ env.OS_TAG }}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-base:${OS_TAG}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-base:latest
 
+  # ==========================
+  # Step 3: Build Vanilla Image
+  # ==========================
   build-vanilla:
-    needs: build-base
     runs-on: ubuntu-latest
+    needs: build-base
+    env:
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Load env
+      - name: Load build environment
         run: |
           sed -i 's/\r$//' build.env
           source build.env
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
           echo "CONT_VER=$CONT_VER" >> $GITHUB_ENV
           echo "BUILD=$BUILD" >> $GITHUB_ENV
+          echo "WOSPI_VERSION=$WOSPI_VERSION" >> $GITHUB_ENV
+          echo "WOSPI_RELEASE_DATE=$WOSPI_RELEASE_DATE" >> $GITHUB_ENV
+          echo "PLATFORM=$PLATFORM" >> $GITHUB_ENV
 
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - name: Docker login
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push vanilla
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Build & Push Vanilla Image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -96,13 +159,12 @@ jobs:
           platforms: ${{ env.PLATFORM }}
           push: true
           build-args: |
-            OS_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-base
-            OS_TAG=latest
-            CONT_VER=${{ env.CONT_VER }}
-            WOSPI_VERSION=${{ env.WOSPI_VERSION }}
-            WOSPI_RELEASE_DATE=${{ env.WOSPI_RELEASE_DATE }}
+            BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-base:${OS_TAG}
+            CONT_VER=${CONT_VER}
+            WOSPI_VERSION=${WOSPI_VERSION}
+            WOSPI_RELEASE_DATE=${WOSPI_RELEASE_DATE}
           tags: |
-            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}-${{ env.BUILD }}
-            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${CONT_VER}-${BUILD}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${CONT_VER}
             ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:latest
 
