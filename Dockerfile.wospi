@@ -1,0 +1,127 @@
+# syntax=docker/dockerfile:1.4
+
+#------------------------------------------------------------------------------------------
+ARG OS_TAG=latest
+ARG OS_IMAGE=wospi-base
+ARG CONT_VER=0.12.1
+ARG WOSPI_VERSION=20191127
+ARG WOSPI_RELEASE_DATE=2019-11-27
+#------------------------------------------------------------------------------------------
+
+# checkout git
+FROM alpine/git:latest
+WORKDIR /addon
+RUN git clone https://github.com/plix1014/wospi-addon.git
+WORKDIR /addon/wospi-addon
+RUN git pull
+
+#------------------------------------------------------------------------------------------
+
+# build image
+FROM ${OS_IMAGE} AS base
+
+ARG CONT_VER
+ARG WOSPI_VERSION
+ARG WOSPI_RELEASE_DATE
+
+# Konfiguration und Labels
+ENV USERHOME=/home/wospi \
+    HOMEPATH=/home/wospi \
+    CSVPATH=/csv_data \
+    BACKUPPATH=/backup \
+    TMPPATH=/var/tmp \
+    WLOGPATH=/var/log/wospi \
+    MAILTO=wospi \
+    PYTHONUNBUFFERED=1
+
+LABEL com.wospi.version=$WOSPI_VERSION \
+      com.wospi.release-date=$WOSPI_RELEASE_DATE \
+      com.wospi.container.maintainer="plix1014@gmail.com"
+
+#------------------------------------------------------------------------------------------
+# build wospi vanilla image
+FROM base AS image-vanilla
+
+# create directories
+RUN bash -c 'mkdir -p $CSVPATH $WLOGPATH $BACKUPPATH'
+
+WORKDIR $HOMEPATH
+
+# wospi distribution start
+# https://www.annoyingdesigns.com/wospi/wospi.zip
+#
+ENV WFILE=/tmp/wospi.zip
+RUN curl -S -o $WFILE https://www.annoyingdesigns.com/wospi/wospi.zip && unzip $WFILE && rm $WFILE
+#
+# wospi distribution end
+
+# add scripts
+COPY data/scripts/entrypoint.sh /
+COPY data/.vimrc /root
+COPY data/.vimrc $USERHOME
+# 
+COPY data/scripts/wxBackup.sh $USERHOME
+
+# add cron jobs
+COPY --chown=root:root --chmod=0755 data/scripts/rc.wospi /etc/init.d/wospi
+COPY --chown=root:root --chmod=0644 data/cron/wospi_cron /etc/cron.d/wospi
+
+# set permissions
+RUN chown -R wospi:wospi $USERHOME $WLOGPATH $BACKUPPATH
+
+
+# additional user, probably not required
+RUN useradd -ms /home/wx/wxview.sh -c "WOSPI virtual terminal" wx
+COPY --chown=wx:wospi --chmod=755 data/scripts/wxview.sh /home/wx
+
+
+# sudo and vim nice to have, but not necessary
+RUN echo "wospi ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/030_wospi-nopasswd
+
+
+USER wospi
+
+# set default dir
+WORKDIR $HOMEPATH
+
+# volume for csv files
+VOLUME [ "$CSVPATH", "$TMPPATH", "$BACKUPPATH" ]
+
+# start wospi
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["wospi"]
+
+
+#------------------------------------------------------------------------------------------
+# replace python2 by python3 scripts
+USER root
+
+# add vcgen binary
+ADD data/raspi.libs.tar.gz /
+
+
+# my additional scripts
+COPY --from=0 /addon/wospi-addon/plotannualwind/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/plotrain/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/wxtools.py $HOMEPATH
+
+COPY --from=0 /addon/wospi-addon/plotbaroweek/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/plotminmaxtemp/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/plotsolar/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/plottempsolar/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/plot24/plot* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/plot24/test* $HOMEPATH
+COPY --from=0 /addon/wospi-addon/transfer/fscp /usr/local/bin
+# lftp config
+ADD data/lftp.config.tar.gz $USERHOME
+# set permissions
+RUN chown -R wospi:wospi $USERHOME 
+COPY --chown=wospi:wospi --chmod=0644 data/wospi.py $HOMEPATH/wospi.py
+# remove original python2 compiled binary and set permissions
+RUN chown -R wospi:wospi $USERHOME $TMPPATH/wospi $WLOGPATH $BACKUPPATH
+RUN rm -f $HOMEPATH/wospi.pyc $HOMEPATH/plot24wind.input $HOMEPATH/plot24wind2.input \
+    && chown -R wospi:wospi $USERHOME $TMPPATH/wospi $WLOGPATH $BACKUPPATH
+
+USER wospi
+
+#------------------------------------------------------------------------------------------
