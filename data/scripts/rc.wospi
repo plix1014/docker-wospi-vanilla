@@ -18,7 +18,7 @@ NAME=wospi
 DESC="WOSPi - Weather Observation System"
 
 RUNUSER=wospi
-PROG=wospi.pyc
+PROG=wospi.py
 RUNSCR=/home/$RUNUSER/$PROG
 
 DATE=$(date +'%Y-%m-%d %H:%M:%S')
@@ -47,7 +47,7 @@ do_start() {
 	        fi
 	    done
 	    chmod 777 /var/log
-	    su - $RUNUSER -c "/usr/bin/python $RUNSCR" 
+	    su - $RUNUSER -c "/usr/bin/python3 $RUNSCR" 
 	    ES=$?
 	fi
 	[ "$VERBOSE" != no ] && log_end_msg $ES

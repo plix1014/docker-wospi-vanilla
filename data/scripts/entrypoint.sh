@@ -10,14 +10,14 @@ export PATH
 RUNUSER=wospi
 HOMEDIR=${HOMEDIR:-/home/$RUNUSER}
 
-PROG=wospi.pyc
+PROG=wospi.py
 RUNSCR=$HOMEDIR/$PROG
 
 #------------------------
 #
 logMSG() {
-    #DT=$(date +'%Y-%m-%d %H:%M:%S')
-    DT=$(date +'%a %b %d %T %Y')
+    #DT=$(date +'%Y-%m-%e %H:%M:%S')
+    DT=$(date +'%a %b %e %T %Y')
     echo "$DT $1: $2"
 }
 
@@ -33,14 +33,14 @@ run_wospi() {
     cd $HOMEDIR
 
     #sudo /etc/init.d/wospi start
-    /usr/bin/python $RUNSCR 
+    /usr/bin/python3 $RUNSCR 
     el=$?
 
     if [ $el -ne 0 ]; then
 	logMSG ERROR "failed to start wospi"
 	exit 1
     else
-	PID=$(ps -ef|grep wospi.py[c] | awk '{print $2}')
+	PID=$(ps -ef|grep wospi.p[y] | awk '{print $2}')
 	logMSG INFO "wospi is running with PID $PID"
 	ps -ef|grep pytho[n]
     fi
