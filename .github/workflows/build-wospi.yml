@@ -24,6 +24,7 @@ jobs:
           sed -i 's/\r$//' build.env
           source build.env
 
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "OS_IMAGE=$OS_IMAGE" >> $GITHUB_ENV
           echo "OS_TAG=$OS_TAG" >> $GITHUB_ENV
           echo "CONT_VER=$CONT_VER" >> $GITHUB_ENV
