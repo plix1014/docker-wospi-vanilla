@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1.4
 
 #------------------------------------------------------------------------------------------
-ARG OS_TAG=latest
-ARG OS_IMAGE=wospi-base
-ARG CONT_VER=0.12.1
-ARG WOSPI_VERSION=20191127
-ARG WOSPI_RELEASE_DATE=2019-11-27
+ARG OS_TAG
+ARG OS_IMAGE
+ARG CONT_VER
+ARG WOSPI_VERSION
+ARG WOSPI_RELEASE_DATE
 #------------------------------------------------------------------------------------------
 
 # checkout git
@@ -36,6 +36,7 @@ ENV USERHOME=/home/wospi \
 
 LABEL com.wospi.version=$WOSPI_VERSION \
       com.wospi.release-date=$WOSPI_RELEASE_DATE \
+      org.opencontainers.image.version=$WOSPI_VERSION \
       com.wospi.container.maintainer="plix1014@gmail.com"
 
 #------------------------------------------------------------------------------------------
