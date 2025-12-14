@@ -2,9 +2,9 @@ name: Build & Push WOSPI Chain (slim → base → vanilla)
 
 on:
   push:
-    #paths:
-    #  - 'Dockerfile.*'
-    #  - 'build.env'
+    paths:
+      - 'Dockerfile.*'
+      - 'build.env'
   workflow_dispatch:
 
 jobs:
