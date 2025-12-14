@@ -109,11 +109,11 @@ jobs:
           platforms: linux/arm64
           push: true
           build-args: |
-            BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-slim:${OS_TAG}
-            CONT_VER=${CONT_VER}
-            OS_TAG=${OS_TAG}
+            BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-slim:${{ env.OS_TAG }}
+            CONT_VER=${{ env.CONT_VER }}
+            OS_TAG=${{ env.OS_TAG }}
           tags: |
-            ${{ secrets.DOCKERHUB_USER }}/wospi-base:${OS_TAG}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-base:${{ env.OS_TAG }}
             ${{ secrets.DOCKERHUB_USER }}/wospi-base:latest
 
   # ==========================
@@ -159,12 +159,12 @@ jobs:
           platforms: ${{ env.PLATFORM }}
           push: true
           build-args: |
-            BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-base:${OS_TAG}
-            CONT_VER=${CONT_VER}
+            BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-base:${{ env.OS_TAG }}
+            CONT_VER=${{ env.CONT_VER }}
             WOSPI_VERSION=${WOSPI_VERSION}
             WOSPI_RELEASE_DATE=${WOSPI_RELEASE_DATE}
           tags: |
-            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${CONT_VER}-${BUILD}
-            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${CONT_VER}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}-${{ env.BUILD }}
+            ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}
             ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:latest
 
