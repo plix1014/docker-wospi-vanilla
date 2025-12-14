@@ -161,8 +161,8 @@ jobs:
           build-args: |
             BASE_IMAGE=${{ secrets.DOCKERHUB_USER }}/wospi-base:${{ env.OS_TAG }}
             CONT_VER=${{ env.CONT_VER }}
-            WOSPI_VERSION=${WOSPI_VERSION}
-            WOSPI_RELEASE_DATE=${WOSPI_RELEASE_DATE}
+            WOSPI_VERSION=${{ env.WOSPI_VERSION }}
+            WOSPI_RELEASE_DATE=${{ env.WOSPI_RELEASE_DATE }}
           tags: |
             ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}-${{ env.BUILD }}
             ${{ secrets.DOCKERHUB_USER }}/wospi-vanilla:${{ env.CONT_VER }}
