@@ -2,9 +2,9 @@ name: Build WOSPI Images
 
 on:
   push:
-    paths:
-      - Dockerfile.*
-      - build.env
+    #paths:
+    #  - Dockerfile.*
+    #  - build.env
   workflow_dispatch:
 
 env:
